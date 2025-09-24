@@ -1,19 +1,22 @@
 #pragma once
 
+#include "EventCallbackIf.hpp"
 #include <functional>
 
+template <typename T>
 using EventCallback_t = std::function<void(const T&)>;
 
 template <typename T>
-class EventCallback
+class EventCallback : public EventCallbackIf
 {
     public:
-        EventCallback(EventCallback_t callback) : m_callback {callback} {}
+        EventCallback(EventCallback_t<T> callback) : m_callback {callback} {}
 
-        void invoke(const T& event)
+        void Invoke(const T& event)
         {
             m_callback(event);
         }
+
     private:
-        EventCallback_t m_callback;
-}
+        EventCallback_t<T> m_callback;
+};
