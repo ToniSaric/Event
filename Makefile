@@ -19,7 +19,7 @@ CXXFLAGS+= -fstack-protector-strong -pedantic-errors -fconcepts -Wno-parentheses
 CXXFLAGS+=
 LDFLAGS	 = $(addprefix -L, $(INCLIST))
 #LDFLAGS	+= -Wl ,-rpath,$(LIBDIR)
-LDFLAGS	+= -lpthread -lboost_thread
+#LDFLAGS	+= -lpthread -lboost_thread
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
 #---------------------------------------------------------------------------------
