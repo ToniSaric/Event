@@ -8,21 +8,23 @@
 #include <unordered_map>
 #include <memory>
 
+
+template <typename T>
 class EventSubscriber
 {
-    using callbackMap_t = std::unordered_map<EventType, std::vector<std::unique_ptr<EventCallbackIf>>>;
+    using callbackMap_t = std::unordered_map<T, std::vector<std::unique_ptr<EventCallbackIf>>>;
 
     public:
         EventSubscriber()
         {}
 
-        template <typename T>
-        void Subscribe(EventType event, EventCallback_t<T> &&callback)
+        template <typename U>
+        void Subscribe(EventType event, EventCallback_t<U> &&callback)
         {
-            m_callbacks[event].push_back(std::make_unique<EventCallback<T>>(std::forward<EventCallback_t<T>>(callback)));
+            m_callbacks[event].push_back(std::make_unique<EventCallback<U>>(std::forward<EventCallback_t<U>>(callback)));
         }
 
-        void Unsubscribe(EventType event)
+        void Unsubscribe(T event)
         {
             auto it = m_callbacks.find(event);
             if (it != m_callbacks.end())
@@ -31,7 +33,7 @@ class EventSubscriber
             }
         }
 
-        void Unsubscribe(EventType event, std::type_index typeIndex)
+        void Unsubscribe(T event, std::type_index typeIndex)
         {
             auto it = m_callbacks.find(event);
             if (it != m_callbacks.end())
@@ -46,17 +48,17 @@ class EventSubscriber
             }
         }
 
-        template <typename T>
-        void Update(EventType event, const T& data)
+        template <typename U>
+        void Update(EventType event, const U& data)
         {
             auto it = m_callbacks.find(event);
             if (it != m_callbacks.end())
             {
                 for (const auto& callback : it->second)
                 {
-                    if (callback->GetDataType() == typeid(T))
+                    if (callback->GetDataType() == typeid(U))
                     {
-                        auto *cb = static_cast<EventCallback<T>*>(callback.get());
+                        auto *cb = static_cast<EventCallback<U>*>(callback.get());
                         cb->Invoke(data);
                     }
                 }
