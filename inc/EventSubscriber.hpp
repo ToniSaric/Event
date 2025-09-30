@@ -49,7 +49,7 @@ class EventSubscriber
         }
 
         template <typename U>
-        void Update(EventType event, const U& data)
+        void Update(T event, const U& data)
         {
             auto it = m_callbacks.find(event);
             if (it != m_callbacks.end())
