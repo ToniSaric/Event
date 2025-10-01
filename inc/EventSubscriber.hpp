@@ -1,13 +1,12 @@
 #pragma once
 
 #include "EventCallback.hpp"
-#include "EventType.hpp"
 
 #include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <memory>
-
+#include <algorithm>
 
 template <typename T>
 class EventSubscriber
@@ -19,7 +18,7 @@ class EventSubscriber
         {}
 
         template <typename U>
-        void Subscribe(EventType event, EventCallback_t<U> &&callback)
+        void Subscribe(T event, EventCallback_t<U> &&callback)
         {
             m_callbacks[event].push_back(std::make_unique<EventCallback<U>>(std::forward<EventCallback_t<U>>(callback)));
         }
