@@ -1,36 +1,37 @@
 #Compiler and Linker
-CXX	= g++
-LD	= g++
+CXX     = g++
+LD      = g++
 
 #The Directories, Source, Includes, Objects, Binary and Resources
-TARGET 	 = event
-BUILDDIR	= build
-TARGETDIR 	= bin
-SRCEXT		= cpp
-OBJEXT		= o
+TARGET    = event
+BUILDDIR  = build
+TARGETDIR = bin
 
 #Flags, Libraries and Includes
-INCLIST = $(shell find -name inc -type d)
-INC		= $(addprefix -I, $(INCLIST))
+INCLIST  = $(shell find -name inc -type d)
+INC      = $(addprefix -I, $(INCLIST))
 
-#The Target Binary Program
-CXXFLAGS = -std=c++2a -Wall -Wextra -Werror -Wl,-z,relro,-z,now -g -pthread
-CXXFLAGS+= -fstack-protector-strong -pedantic-errors -fconcepts -Wno-parentheses
-CXXFLAGS+=
-LDFLAGS	 = $(addprefix -L, $(INCLIST))
+CXXFLAGS  = -std=c++2a -Wall -Wextra -Werror -Wl,-z,relro,-z,now -g -pthread
+CXXFLAGS += -fstack-protector-strong -pedantic-errors -fconcepts -Wno-parentheses
+LDFLAGS   = $(addprefix -L, $(INCLIST))
 
 #---------------------------------------------------------------------------------
-#DO NOT EDIT BELOW THIS LINE
-#---------------------------------------------------------------------------------
+#Main sources (src/ only — excludes tests)
+SOURCES = $(wildcard src/*.cpp)
+OBJECTS = $(addprefix $(BUILDDIR)/,$(notdir $(SOURCES:.cpp=.o)))
+VPATH   = src
 
-#List of all sources and objects
-SOURCES = $(shell find -name *.cpp)
-#SOURCES = $(shell find -path ./libs -prune -o -type f -name '*.cpp' -print)
-OBJECTS = $(addprefix $(BUILDDIR)/,$(patsubst %.cpp,%.o, $(notdir $(SOURCES))))
-VPATH 	= $(dir $(SOURCES))
+#Test sources
+TESTDIR      = tests
+TEST_SOURCES = $(wildcard $(TESTDIR)/*.cpp)
+TEST_OBJECTS = $(addprefix $(BUILDDIR)/,$(notdir $(TEST_SOURCES:.cpp=.o)))
+GTEST_LIBS   = -lgtest -lgtest_main -pthread
+VPATH       += $(TESTDIR)
+
+#---------------------------------------------------------------------------------
 
 #Default Make
-all: directories $(TARGET)
+all: directories $(TARGETDIR)/$(TARGET)
 
 #Remake
 remake: clean all
@@ -41,19 +42,22 @@ directories:
 	@mkdir -p $(TARGETDIR)
 
 #Linking
-$(TARGET): $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $(TARGETDIR)/$(TARGET) $(LIBS)
+$(TARGETDIR)/$(TARGET): $(OBJECTS)
+	$(LD) $(LDFLAGS) $^ -o $@
 
 #Compiling
-$(BUILDDIR)/%.o : %.cpp
+$(BUILDDIR)/%.o: %.cpp
 	$(CXX) $(INC) $(CXXFLAGS) -c $< -o $@
+
+#Test
+test: directories $(TEST_OBJECTS)
+	$(LD) $(CXXFLAGS) $(TEST_OBJECTS) -o $(TARGETDIR)/test $(GTEST_LIBS)
+	./$(TARGETDIR)/test
 
 #Clean all
 clean:
 	rm -rf $(BUILDDIR)
 	rm -rf $(TARGETDIR)
 
-#TO-DO: Create Test rule:
-
 #Non-File Targets
-.PHONY: all remake clean directories
+.PHONY: all remake clean directories test

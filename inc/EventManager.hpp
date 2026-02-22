@@ -14,9 +14,9 @@ class EventManager
 public:
     struct Token
     {
-        T             event;
+        T event;
         std::type_index dataType;
-        size_t        id;
+        size_t id;
     };
 
     EventManager() = default;
