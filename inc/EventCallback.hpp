@@ -16,12 +16,12 @@ class EventCallback : public EventCallbackIf
         {
         }
 
-        void Invoke(const T& event)
+        void invoke(const T& event)
         {
             m_callback(event);
         }
 
-        std::type_index GetDataType() const override
+        std::type_index getDataType() const override
         {
             return typeid(T);
         }

@@ -1,69 +1,84 @@
 #pragma once
 
-#include "EventCallback.hpp"
+#include "EventManager.hpp"
 
-#include <iostream>
+#include <typeindex>
 #include <vector>
-#include <unordered_map>
-#include <memory>
 #include <algorithm>
 
 template <typename T>
 class EventSubscriber
 {
-    using callbackMap_t = std::unordered_map<T, std::vector<std::unique_ptr<EventCallbackIf>>>;
+public:
+    explicit EventSubscriber(EventManager<T>& manager)
+     : m_manager(&manager)
+    {}
 
-    public:
-        EventSubscriber()
-        {}
+    ~EventSubscriber()
+    {
+        unsubscribeAll();
+    }
 
-        template <typename U>
-        void Subscribe(T event, EventCallback_t<U> &&callback)
-        {
-            m_callbacks[event].push_back(std::make_unique<EventCallback<U>>(std::forward<EventCallback_t<U>>(callback)));
-        }
+    EventSubscriber(const EventSubscriber&) = delete;
+    EventSubscriber& operator=(const EventSubscriber&) = delete;
 
-        void Unsubscribe(T event)
-        {
-            auto it = m_callbacks.find(event);
-            if (it != m_callbacks.end())
-            {
-                m_callbacks.erase(it);
-            }
-        }
+    EventSubscriber(EventSubscriber&& other) noexcept
+     : m_manager(other.m_manager), m_tokens(std::move(other.m_tokens))
+    {
+        other.m_manager = nullptr;
+    }
 
-        void Unsubscribe(T event, std::type_index typeIndex)
-        {
-            auto it = m_callbacks.find(event);
-            if (it != m_callbacks.end())
-            {
-                auto &callbacks = it->second;
-                callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(),
-                                [typeIndex](const std::unique_ptr<EventCallbackIf>& callback)
-                                {
-                                    return callback->GetDataType() == typeIndex;
-                                }),
-                                callbacks.end());
-            }
-        }
+    template <typename U>
+    void subscribe(T event, EventCallback_t<U> callback)
+    {
+        m_tokens.push_back(m_manager->subscribe(event, std::move(callback)));
+    }
 
-        template <typename U>
-        void Update(T event, const U& data)
-        {
-            auto it = m_callbacks.find(event);
-            if (it != m_callbacks.end())
-            {
-                for (const auto& callback : it->second)
+    void unsubscribe(T event)
+    {
+        m_tokens.erase(
+            std::remove_if(m_tokens.begin(), m_tokens.end(),
+                [&](const auto& token)
                 {
-                    if (callback->GetDataType() == typeid(U))
+                    if (token.event == event)
                     {
-                        auto *cb = static_cast<EventCallback<U>*>(callback.get());
-                        cb->Invoke(data);
+                        m_manager->unsubscribe(token);
+                        return true;
                     }
-                }
-            }
-        }
+                    return false;
+                }),
+            m_tokens.end());
+    }
 
-    private:
-        callbackMap_t m_callbacks;
+    void unsubscribe(T event, std::type_index dataType)
+    {
+        m_tokens.erase(
+            std::remove_if(m_tokens.begin(), m_tokens.end(),
+                [&](const auto& token)
+                {
+                    if (token.event == event && token.dataType == dataType)
+                    {
+                        m_manager->unsubscribe(token);
+                        return true;
+                    }
+                    return false;
+                }),
+            m_tokens.end());
+    }
+
+    void unsubscribeAll()
+    {
+        if (m_manager)
+        {
+            for (auto& token : m_tokens)
+            {
+                m_manager->unsubscribe(token);
+            }
+            m_tokens.clear();
+        }
+    }
+
+private:
+    EventManager<T>* m_manager;
+    std::vector<typename EventManager<T>::Token> m_tokens;
 };

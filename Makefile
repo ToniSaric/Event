@@ -18,8 +18,7 @@ CXXFLAGS = -std=c++2a -Wall -Wextra -Werror -Wl,-z,relro,-z,now -g -pthread
 CXXFLAGS+= -fstack-protector-strong -pedantic-errors -fconcepts -Wno-parentheses
 CXXFLAGS+=
 LDFLAGS	 = $(addprefix -L, $(INCLIST))
-#LDFLAGS	+= -Wl ,-rpath,$(LIBDIR)
-#LDFLAGS	+= -lpthread -lboost_thread
+
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
 #---------------------------------------------------------------------------------
